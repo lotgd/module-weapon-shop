@@ -1,3 +1,3 @@
 entityNamespace:
 subscriptionPatterns:
-
+    - "/e\/lotgd\/core\/navigate-to\/lotgd\/module-weapon-shop\/shop/"
