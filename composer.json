@@ -21,6 +21,7 @@
         }
     ],
     "require": {
+        "lotgd/core": "dev-master",
         "lotgd/module-forms": "dev-master",
         "lotgd/module-simple-inventory": "dev-master"
     }

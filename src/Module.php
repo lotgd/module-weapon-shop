@@ -8,6 +8,7 @@ use LotGD\Core\Game;
 use LotGD\Core\Module as ModuleInterface;
 use LotGD\Core\Models\Module as ModuleModel;
 use LotGD\Core\Models\CharacterViewpoint;
+use LotGD\Core\Models\Scene;
 
 use LotGD\Modules\Forms\Form;
 use LotGD\Modules\Forms\FormElement;
@@ -21,10 +22,7 @@ class Module implements ModuleInterface {
     const Module = 'lotgd/module-weapon-shop';
 
     const WeaponShopScene = 'lotgd/module-weapon-shop/shop';
-    const WeaponShopSceneIdProperty = 'WeaponShopSceneId';
-
-    const BuyScene = 'lotgd/module-weapon-shop/buy';
-    const BuySceneIdProperty = 'BuySceneId';
+    const WeaponShopSceneArrayProperty = 'lotgd/module-weapon-shop/scenes';
 
     const ChoiceParameter = 'choice';
 
@@ -35,49 +33,79 @@ class Module implements ModuleInterface {
         return $item ? (int)round(($item->getCost() * .75), 0) : 0;
     }
 
-    public static function getBuyAction(Game $g): Action
-    {
-        $m = $g->getModuleManager()->getModule(self::Module);
-        $destinationSceneId = $m->getProperty(self::BuySceneIdProperty);
-        return new Action($destinationSceneId);
-    }
-
-    public static function handleEvent(Game $g, string $event, array $context)
+    public static function handleEvent(Game $g, string $event, array &$context)
     {
         switch ($event) {
             case 'e/lotgd/core/navigate-to/lotgd/module-weapon-shop/shop':
-                ShopScene::handleNavigation($g, $context);
-                break;
-            case 'e/lotgd/core/navigate-to/lotgd/module-weapon-shop/buy':
-                BuyScene::handleNavigation($g, $context);
+                if (isset($context[self::ChoiceParameter])) {
+                    BuySubScene::handleNavigation($g, $context);
+                } else {
+                    ShopSubScene::handleNavigation($g, $context);
+                }
                 break;
         }
     }
 
-    private static function saveScene(Game $g, ModuleModel $module, Scene $s, string $property)
+    private static function getBaseScene(): Scene
     {
-        $s->save($g->getEntityManager());
-        $module->setProperty($property, $s->getId());
+        return Scene::create([
+            'template' => self::WeaponShopScene,
+            'title' => 'MightyE\'s Weapons',
+            'description' => "`!MightyE `7stands behind a counter and appears to pay little "
+                           . "attention to you as you enter, but you know from experience that "
+                           . "he has his eye on every move you make.\n"
+                           . "`!MightyE`7 finally nods to you, stroking his goatee and looking "
+                           . "like he wished he could have an opportunity to use one of his weapons.\n"
+                           . "`7You stroll up the counter and try your best to look like you know "
+                           ." what most of these contraptions do.",
+
+        ]);
     }
 
-    private static function removeSceneAndProperty(Game $g, ModuleModel $module, string $property)
+    private static function storeSceneId(ModuleModel $module, string $id)
     {
-        $id = $module->getProperty($property);
-        $s = $g->getEntityManager()->getRepository(Scene::class)->find($id);
-        $g->getEntityManager()->remove($s);
-
-        $modele->setProperty($property, null);
+        $scenes = $module->getProperty(self::WeaponShopSceneArrayProperty);
+        if ($scenes === null) {
+            $scenes = [];
+        }
+        $scenes[] = $id;
+        $module->setProperty(self::WeaponShopSceneArrayProperty, $scenes);
     }
 
     public static function onRegister(Game $g, ModuleModel $module)
     {
-        self::saveScene($g, $module, ShopScene::getScene(), self::WeaponShopSceneIdProperty);
-        self::saveScene($g, $module, BuyScene::getScene(), self::BuySceneIdProperty);
+        // Add a shop scene as a child to every village-like scene.
+
+        // Find the village-like scenes.
+        $villages = $g->getEntityManager()->getRepository(Scene::class)->findBy([ 'template' => 'lotgd/module-village/village' ]);
+        if ($villages === null || count($villages) == 0) {
+            $g->getLogger()->addNotice(sprintf("%s: Couldn't find any villages to add the weapon shop to", self::Module));
+        } else {
+            foreach ($villages as $v) {
+                $g->getLogger()->addNotice(sprintf("%s: Adding a weapon shop to scene id=%i", self::Module, $v->getId()));
+                $shop = self::getBaseScene();
+
+                $v->addChild($shop);
+                $shop->setParent($v);
+                $shop->save($g->getEntityManager());
+
+                // Keep a list of these shop scenes we've added, so we can remove them
+                // on unregistration.
+                self::storeSceneId($module, $shop->getId());
+            }
+        }
     }
 
     public static function onUnregister(Game $g, ModuleModel $module)
     {
-        self::removeSceneAndProperty($g, $module, self::WeaponShopSceneIdProperty);
-        self::removeSceneAndProperty($g, $module, self::BuySceneIdProperty);
+        $scenes = $module->getProperty(self::WeaponShopSceneArrayProperty);
+        if ($scenes && count($scenes) > 0) {
+            foreach ($scenes as $id) {
+                $s = $g->getEntityManager()->getRepository(Scene::class)->find($id);
+                $g->getEntityManager()->remove($s);
+            }
+        }
+
+        $module->setProperty(self::WeaponShopSceneArrayProperty, null);
     }
 }
