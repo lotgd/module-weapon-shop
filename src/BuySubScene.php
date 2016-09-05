@@ -3,7 +3,8 @@ declare(static_types=1);
 
 namespace LotGD\Modules\WeaponShop;
 
-use LotGD\Core\Scene;
+use LotGD\Core\Models\CharacterViewpoint;
+use LotGD\Core\Models\Scene;
 use LotGD\Modules\SimpleInventory\Module as SimpleInventory;
 
 class BuySubScene

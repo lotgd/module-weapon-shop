@@ -15,6 +15,15 @@ characters:
         health: 90
         level: 1
         deletedAt:
+character_viewpoints:
+    -
+        owner_id: 1
+        actions: "a:0:{}"
+        attachments: "a:0:{}"
+        data: "a:0:{}"
+        title: "Village"
+        description: "You arrive in a village."
+        template: "lotgd/module-village/village"
 scenes:
     -
         id: 1

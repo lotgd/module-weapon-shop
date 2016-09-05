@@ -5,7 +5,8 @@ namespace LotGD\Modules\WeaponShop;
 
 use LotGD\Core\Game;
 use LotGD\Core\Action;
-use LotGD\Core\Scene;
+use LotGD\Core\Models\CharacterViewpoint;
+use LotGD\Core\Models\Scene;
 use LotGD\Modules\SimpleInventory\Module as SimpleInventory;
 use LotGD\Modules\SimpleWealth\Module as SimpleWealth;
 

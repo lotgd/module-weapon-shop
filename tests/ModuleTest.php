@@ -8,6 +8,7 @@ use LotGD\Core\Configuration;
 use LotGD\Core\Game;
 use LotGD\Core\Models\Character;
 use LotGD\Core\Models\Module as ModuleModel;
+use LotGD\Core\Models\Scene;
 use LotGD\Core\Tests\ModelTestCase;
 
 use LotGD\Modules\WeaponShop\Module;
@@ -68,7 +69,7 @@ class ModuleTest extends ModelTestCase
         // Assert that databases are the same before and after.
         // TODO for module author: update list of tables below to include the
         // tables you modify during registration/unregistration.
-        $after = $this->getConnection()->createDataSet(['characters', 'scenes', 'modules']);
+        $after = $this->getConnection()->createDataSet(['characters', 'character_viewpoints', 'scenes', 'modules']);
         $before = $this->getDataSet();
 
         $this->assertDataSetsEqual($before, $after);
@@ -88,9 +89,12 @@ class ModuleTest extends ModelTestCase
     {
         // Always good to test a non-existing event just to make sure nothing happens :).
         $character = $this->g->getEntityManager()->getRepository(Character::class)->find(1);
+        $scene = $this->g->getEntityManager()->getRepository(Scene::class)->findOneBy(["template" => "lotgd/module-weapon-shop/shop"]);
+
         $context = [
             "character" => $character,
-            "scene" => $character->getViewpoint()
+            "scene" => $scene,
+            "viewpoint" =>  $character->getViewpoint(),
         ];
 
         Module::handleEvent($this->g, 'e/lotgd/core/navigate-to/lotgd/module-weapon-shop/shop', $context);

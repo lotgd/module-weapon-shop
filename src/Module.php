@@ -62,7 +62,7 @@ class Module implements ModuleInterface {
         ]);
     }
 
-    private static function storeSceneId(ModuleModel $module, string $id)
+    private static function storeSceneId(ModuleModel $module, int $id)
     {
         $scenes = $module->getProperty(self::WeaponShopSceneArrayProperty);
         if ($scenes === null) {
@@ -85,7 +85,6 @@ class Module implements ModuleInterface {
                 $g->getLogger()->addNotice(sprintf("%s: Adding a weapon shop to scene id=%i", self::Module, $v->getId()));
                 $shop = self::getBaseScene();
 
-                $v->addChild($shop);
                 $shop->setParent($v);
                 $shop->save($g->getEntityManager());
 
