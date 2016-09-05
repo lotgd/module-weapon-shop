@@ -3,6 +3,7 @@ declare(static_types=1);
 
 namespace LotGD\Modules\WeaponShop;
 
+use LotGD\Core\Game;
 use LotGD\Core\Action;
 use LotGD\Core\Scene;
 use LotGD\Modules\SimpleInventory\Module as SimpleInventory;
@@ -54,14 +55,16 @@ class ShopSubScene
                 ? FormElementOptions::None()
                 : FormElementOptions::Disabled();
 
-            $elements[] = new FormElement(Module::ChoiceParameter,
-                                          FormElementType::Button(),
-                                          "{$name}",
-                                          $id,
-                                          $options));
+            $elements[] = new FormElement(
+                Module::ChoiceParameter,
+                FormElementType::Button(),
+                "{$name}",
+                $id,
+                $options
+            );
         }
 
-        $form = new Form($elements, self::getBuyAction($g);
+        $form = new Form($elements, self::getBuyAction($g));
     }
 
     private static function addMenu(Game $g, Scene $scene, CharacterViewpoint $viewpoint)

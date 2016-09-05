@@ -21,7 +21,7 @@ scenes:
         parent:
         title: "Village"
         description: "You arrive in a village."
-        template: 'lotgd/test/village'
+        template: 'lotgd/module-village/village'
 modules:
     -
         library: 'lotgd/test-module'

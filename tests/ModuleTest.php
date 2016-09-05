@@ -84,4 +84,15 @@ class ModuleTest extends ModelTestCase
         Module::handleEvent($this->g, 'e/lotgd/tests/unknown-event', $context);
     }
 
+    public function testHandleVillageEvent()
+    {
+        // Always good to test a non-existing event just to make sure nothing happens :).
+        $character = $this->g->getEntityManager()->getRepository(Character::class)->find(1);
+        $context = [
+            "character" => $character,
+            "scene" => $character->getViewpoint()
+        ];
+
+        Module::handleEvent($this->g, 'e/lotgd/core/navigate-to/lotgd/module-weapon-shop/shop', $context);
+    }
 }
