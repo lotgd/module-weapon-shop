@@ -10,6 +10,7 @@ use LotGD\Core\Models\CharacterViewpoint;
 use LotGD\Core\Models\Scene;
 use LotGD\Modules\SimpleInventory\Module as SimpleInventory;
 use LotGD\Modules\SimpleWealth\Module as SimpleWealth;
+use LotGD\Modules\Forms\Form;
 
 class ShopSubScene
 {
@@ -45,7 +46,7 @@ class ShopSubScene
         $user = $viewpoint->getOwner();
 
         $wealth = new SimpleWealth($g);
-        $gold = $wealth->getGold($user);
+        $gold = $wealth->getGoldForUser($user);
 
         $inventory = new SimpleInventory($g);
         $weapons = $inventory->getWeaponsForLevel($user->getLevel());
