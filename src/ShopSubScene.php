@@ -5,6 +5,7 @@ namespace LotGD\Modules\WeaponShop;
 
 use LotGD\Core\Game;
 use LotGD\Core\Action;
+use LotGD\Core\Models\Character;
 use LotGD\Core\Models\CharacterViewpoint;
 use LotGD\Core\Models\Scene;
 use LotGD\Modules\SimpleInventory\Module as SimpleInventory;
@@ -15,9 +16,10 @@ class ShopSubScene
     private static function addTradeInMessage(Game $g, Scene $scene, CharacterViewpoint $viewpoint)
     {
         $description = $scene->getDescription();
+        $user = $viewpoint->getOwner();
 
         $inventory = new SimpleInventory($g);
-        $weapon = $inventory->getWeapon($user);
+        $weapon = $inventory->getWeaponForUser($user);
 
         // Get the trade-in value for their existing weapon.
         if (!$weapon) {
@@ -38,7 +40,7 @@ class ShopSubScene
         }
     }
 
-    private static function addForSaleForm(Game $g, Scene $scene, CharacterViewpoint $viewpoint, int $tradeInValue)
+    private static function addForSaleForm(Game $g, Scene $scene, CharacterViewpoint $viewpoint, int $tradeInValue = 0)
     {
         $user = $viewpoint->getOwner();
 

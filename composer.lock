@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "e9929edb18d1327380ac6b982ef14136",
-    "content-hash": "4e0c78a7ab112f80b6168c85a0453444",
+    "hash": "c3f95f681031fe6cc8c96de1be725d0d",
+    "content-hash": "2d86bee1f20f02939b83b62cf23f8044",
     "packages": [
         {
             "name": "behat/transliterator",
@@ -1211,6 +1211,45 @@
                 "issues": "https://github.com/lotgd/module-simple-inventory/issues"
             },
             "time": "2016-08-24 06:55:50"
+        },
+        {
+            "name": "lotgd/module-simple-wealth",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/lotgd/module-simple-wealth.git",
+                "reference": "3b3e90bbe083f3c88a781630fb140502bc8d929e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/lotgd/module-simple-wealth/zipball/3b3e90bbe083f3c88a781630fb140502bc8d929e",
+                "reference": "3b3e90bbe083f3c88a781630fb140502bc8d929e",
+                "shasum": ""
+            },
+            "require": {
+                "lotgd/core": "dev-master"
+            },
+            "type": "lotgd-module",
+            "autoload": {
+                "psr-4": {
+                    "LotGD\\Modules\\SimpleWealth\\": "src/"
+                }
+            },
+            "license": [
+                "AGPL-3.0"
+            ],
+            "authors": [
+                {
+                    "name": "Austen McDonald",
+                    "email": "austen.mcdonald@gmail.com"
+                }
+            ],
+            "description": "Gold and gem tracking for users.",
+            "support": {
+                "source": "https://github.com/lotgd/module-simple-wealth/tree/master",
+                "issues": "https://github.com/lotgd/module-simple-wealth/issues"
+            },
+            "time": "2016-08-24 10:26:41"
         },
         {
             "name": "monolog/monolog",
@@ -3082,7 +3121,8 @@
     "stability-flags": {
         "lotgd/core": 20,
         "lotgd/module-forms": 20,
-        "lotgd/module-simple-inventory": 20
+        "lotgd/module-simple-inventory": 20,
+        "lotgd/module-simple-wealth": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
