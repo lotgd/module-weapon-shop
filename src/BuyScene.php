@@ -1,14 +1,25 @@
 <?php
-declare(static_types=1);
+declare(strict_types=1);
 
 namespace LotGD\Modules\WeaponShop;
 
+use LotGD\Core\Game;
 use LotGD\Core\Models\CharacterViewpoint;
 use LotGD\Core\Models\Scene;
 use LotGD\Modules\SimpleInventory\Module as SimpleInventory;
+use LotGD\Modules\SimpleWealth\Module as SimpleWealth;
 
-class BuySubScene
+class BuyScene
 {
+    public function getScene()
+    {
+        return Scene::create([
+            'template' => Module::WeaponShopBuyScene,
+            'title' => 'MightyE\'s Weapons',
+            'description' => ''
+        ]);
+    }
+
     private static function getChoiceWeapon(Game $g, array $parameters)
     {
         if (isset($parameters[Module::ChoiceParameter])) {
@@ -64,19 +75,25 @@ class BuySubScene
         $viewpoint->setDescription($description);
     }
 
-    private static function addMenu(Game $g, Scene $scene, CharacterViewpoint $viewpoint)
+    private static function addMenu(Game $g, CharacterViewpoint $viewpoint, array $context)
     {
-        $actionGroups = $viewpoint->getActions();
-        foreach ($actionGroups as $g) {
-            if ($g->getId() === ActionGroup::DefaultGroup) {
-                $actions = $g->getActions();
-                $actions[] = new Action($scene->getParent()->getId());
-                $g->setActions($actions);
+        // Add the back action to the scene before the shop, passed down as 'origin' in
+        // the context.
+
+        $actionGroups = $viewpoint->getActionGroups();
+        $originSceneId = $context['origin'];
+        foreach ($actionGroups as $group) {
+            if ($group->getId() === ActionGroup::DefaultGroup) {
+                $actions = $group->getActions();
+                $actions[] = new Action($originSceneId);
+                $group->setActions($actions);
+                break;
             }
         }
+        $viewpoint->setActionGroups($actionGroups);
     }
 
-    public static function handleNavigation(Game $g, array $context)
+    public static function handleViewpoint(Game $g, array $context)
     {
         $em = $g->getEntityManager();
 
@@ -85,7 +102,7 @@ class BuySubScene
         $parameters = $context['parameters'];
 
         self::addDescription($g, $scene, $viewpoint, $parameters);
-        self::addMenu($g, $scene, $viewpoint);
+        self::addMenu($g, $viewpoint, $context);
 
         $viewpoint->save($em);
     }

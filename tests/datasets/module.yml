@@ -1,5 +1,13 @@
 characters:
     -
+        id: 0
+        name: "Thorin"
+        displayName: "Thorin Oakenshield"
+        maxHealth: 100
+        health: 90
+        level: 50
+        deletedAt:
+    -
         id: 1
         name: "Gandalf"
         displayName: "Gandalf the Grey"
@@ -13,7 +21,7 @@ characters:
         displayName: "Bilbo of the Shire"
         maxHealth: 100
         health: 90
-        level: 1
+        level: 2
         deletedAt:
 character_viewpoints:
     -
@@ -35,3 +43,18 @@ modules:
     -
         library: 'lotgd/test-module'
         createdAt: 2016-08-22
+lotgd_simple_inventory_weapons:
+    -
+        id: 1
+        name: "Weapon 1"
+        level: 1
+        sortKey: 1
+        cost: 100
+        attack: 1
+    -
+        id: 2
+        name: "Weapon 2"
+        level: 2
+        sortKey: 1
+        cost: 100
+        attack: 1

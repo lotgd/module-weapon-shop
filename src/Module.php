@@ -22,6 +22,7 @@ class Module implements ModuleInterface {
     const Module = 'lotgd/module-weapon-shop';
 
     const WeaponShopScene = 'lotgd/module-weapon-shop/shop';
+    const WeaponShopBuyScene = 'lotgd/module-weapon-shop/buy';
     const WeaponShopSceneArrayProperty = 'lotgd/module-weapon-shop/scenes';
 
     const ChoiceParameter = 'choice';
@@ -36,30 +37,13 @@ class Module implements ModuleInterface {
     public static function handleEvent(Game $g, string $event, array &$context)
     {
         switch ($event) {
-            case 'e/lotgd/core/navigate-to/lotgd/module-weapon-shop/shop':
-                if (isset($context[self::ChoiceParameter])) {
-                    BuySubScene::handleNavigation($g, $context);
-                } else {
-                    ShopSubScene::handleNavigation($g, $context);
-                }
+            case 'h/lotgd/core/navigate-to/lotgd/module-weapon-shop/shop':
+                ShopScene::handleViewpoint($g, $context);
+                break;
+            case 'h/lotgd/core/navigate-to/lotgd/module-weapon-shop/buy':
+                BuyScene::handleViewpoint($g, $context);
                 break;
         }
-    }
-
-    private static function getBaseScene(): Scene
-    {
-        return Scene::create([
-            'template' => self::WeaponShopScene,
-            'title' => 'MightyE\'s Weapons',
-            'description' => "`!MightyE `7stands behind a counter and appears to pay little "
-                           . "attention to you as you enter, but you know from experience that "
-                           . "he has his eye on every move you make.\n"
-                           . "`!MightyE`7 finally nods to you, stroking his goatee and looking "
-                           . "like he wished he could have an opportunity to use one of his weapons.\n"
-                           . "`7You stroll up the counter and try your best to look like you know "
-                           ." what most of these contraptions do.",
-
-        ]);
     }
 
     private static function storeSceneId(ModuleModel $module, int $id)
@@ -82,15 +66,20 @@ class Module implements ModuleInterface {
             $g->getLogger()->addNotice(sprintf("%s: Couldn't find any villages to add the weapon shop to", self::Module));
         } else {
             foreach ($villages as $v) {
-                $g->getLogger()->addNotice(sprintf("%s: Adding a weapon shop to scene id=%i", self::Module, $v->getId()));
-                $shop = self::getBaseScene();
-
+                $g->getLogger()->addNotice(sprintf("%s: Adding a weapon shop to scene id=%d", self::Module, $v->getId()));
+                $shop = ShopScene::getScene();
                 $shop->setParent($v);
                 $shop->save($g->getEntityManager());
+
+                // Add a buying scene.
+                $buy = BuyScene::getScene();
+                $buy->setParent($shop);
+                $buy->save($g->getEntityManager());
 
                 // Keep a list of these shop scenes we've added, so we can remove them
                 // on unregistration.
                 self::storeSceneId($module, $shop->getId());
+                self::storeSceneId($module, $buy->getId());
             }
         }
     }
@@ -105,6 +94,6 @@ class Module implements ModuleInterface {
             }
         }
 
-        $module->setProperty(self::WeaponShopSceneArrayProperty, null);
+        $module->unsetProperty(self::WeaponShopSceneArrayProperty);
     }
 }

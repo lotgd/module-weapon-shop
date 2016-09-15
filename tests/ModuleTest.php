@@ -2,21 +2,39 @@
 declare(strict_types=1);
 
 use Monolog\Logger;
-use Monolog\Handler\NullHandler;
+use Monolog\Handler\RotatingFileHandler;
 
 use LotGD\Core\Configuration;
 use LotGD\Core\Game;
+use LotGD\Core\EventHandler;
+use LotGD\Core\LibraryConfigurationManager;
 use LotGD\Core\Models\Character;
 use LotGD\Core\Models\Module as ModuleModel;
 use LotGD\Core\Models\Scene;
 use LotGD\Core\Tests\ModelTestCase;
 
+use LotGD\Modules\SimpleInventory\Module as SimpleInventory;
+use LotGD\Modules\SimpleInventory\Models\Weapon;
+
 use LotGD\Modules\WeaponShop\Module;
+
+class DefaultSceneProvider implements EventHandler
+{
+    public static function handleEvent(Game $g, string $event, array &$context)
+    {
+        switch ($event) {
+            case 'h/lotgd/core/default-scene':
+                $context['scene'] = $g->getEntityManager()->getRepository(Scene::class)->find(1);
+                break;
+        }
+    }
+}
 
 class ModuleTest extends ModelTestCase
 {
     const Library = 'lotgd/module-weapon-shop';
 
+    private $libraryConfiguration;
     private $g;
     private $moduleModel;
 
@@ -29,10 +47,8 @@ class ModuleTest extends ModelTestCase
     {
         parent::setUp();
 
-        // Make an empty logger for these tests. Feel free to change this
-        // to place log messages somewhere you can easily find them.
         $logger  = new Logger('test');
-        $logger->pushHandler(new NullHandler());
+        $logger->pushHandler(new RotatingFileHandler(__DIR__ . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'lotgd', 14));
 
         // Create a Game object for use in these tests.
         $this->g = new Game(new Configuration(getenv('LOTGD_TESTS_CONFIG_PATH')), $logger, $this->getEntityManager(), implode(DIRECTORY_SEPARATOR, [__DIR__, '..']));
@@ -40,42 +56,48 @@ class ModuleTest extends ModelTestCase
         // Register and unregister before/after each test, since
         // handleEvent() calls may expect the module be registered (for example,
         // if they read properties from the model).
-        $this->moduleModel = new ModuleModel(self::Library);
-        $this->moduleModel->save($this->getEntityManager());
-        Module::onRegister($this->g, $this->moduleModel);
+        $libraryConfigurationManager = new LibraryConfigurationManager($this->g->getComposerManager(), __DIR__ . DIRECTORY_SEPARATOR . '..');
+        $this->libraryConfiguration = $libraryConfigurationManager->getConfigurationForLibrary(self::Library);
+        $this->g->getModuleManager()->register($this->libraryConfiguration);
+    }
+
+    public function navigationSetUpAndAssert(Character $character)
+    {
+        $village = $this->getEntityManager()->getRepository(Scene::class)->find(1);
+
+        $this->g->setCharacter($character);
+
+        // Set up a viewpoint to be in the dummy village, via the default viewpoint
+        // functionality.
+        $this->g->getEventManager()->subscribe('/h\/lotgd\/core\/default-scene/', DefaultSceneProvider::class, 'lotgd/core/tests');
+        $viewpoint = $this->g->getViewpoint();
+        $this->assertSame($village->getTemplate(), $viewpoint->getTemplate());
+
+        // Navigate to the first action, which should be the weapon shop.
+        $this->g->takeAction($viewpoint->getActionGroups()[0]->getActions()[0]->getId());
+        $viewpoint = $this->g->getViewpoint();
+        $this->assertSame(Module::WeaponShopScene, $viewpoint->getTemplate());
+    }
+
+    public function navigationTearDown()
+    {
+        $this->g->getEventManager()->unsubscribe('/h\/lotgd\/core\/default-scene/', DefaultSceneProvider::class, 'lotgd/core/tests');
     }
 
     public function tearDown()
     {
-        parent::tearDown();
+        $this->g->getModuleManager()->unregister($this->libraryConfiguration);
 
-        Module::onUnregister($this->g, $this->moduleModel);
-        $m = $this->getEntityManager()->getRepository(ModuleModel::class)->find(self::Library);
-        if ($m) {
-            $m->delete($this->getEntityManager());
-        }
+        parent::tearDown();
     }
 
-    // TODO for LotGD staff: this test assumes the schema in their yaml file
-    // reflects all columns in the core's models of characters, scenes and modules.
-    // This is pretty fragile since every time we add a column, everyone's tests
-    // will break.
-    public function testUnregister()
+    public function testWasAddedAsChildToVillage()
     {
-        Module::onUnregister($this->g, $this->moduleModel);
-        $m = $this->getEntityManager()->getRepository(ModuleModel::class)->find(self::Library);
-        $m->delete($this->getEntityManager());
-
-        // Assert that databases are the same before and after.
-        // TODO for module author: update list of tables below to include the
-        // tables you modify during registration/unregistration.
-        $after = $this->getConnection()->createDataSet(['characters', 'character_viewpoints', 'scenes', 'modules']);
-        $before = $this->getDataSet();
-
-        $this->assertDataSetsEqual($before, $after);
-
-        // Since tearDown() contains an onUnregister() call, this also tests
-        // double-unregistering, which should be properly supported by modules.
+        $village = $this->getEntityManager()->getRepository(Scene::class)->find(1);
+        $this->assertSame(1, count($village->getChildren()));
+        $shop = $village->getChildren()[0];
+        $this->assertSame(Module::WeaponShopScene, $shop->getTemplate());
+        $this->assertSame($village->getId(), $shop->getParent()->getId());
     }
 
     public function testHandleUnknownEvent()
@@ -87,7 +109,6 @@ class ModuleTest extends ModelTestCase
 
     public function testHandleVillageEvent()
     {
-        // Always good to test a non-existing event just to make sure nothing happens :).
         $character = $this->g->getEntityManager()->getRepository(Character::class)->find(1);
         $scene = $this->g->getEntityManager()->getRepository(Scene::class)->findOneBy(["template" => "lotgd/module-weapon-shop/shop"]);
 
@@ -98,5 +119,45 @@ class ModuleTest extends ModelTestCase
         ];
 
         Module::handleEvent($this->g, 'e/lotgd/core/navigate-to/lotgd/module-weapon-shop/shop', $context);
+    }
+
+    public function testNavigateToShopNoWeapons()
+    {
+        $inventory = new SimpleInventory($this->g);
+
+        $character = $this->getEntityManager()->getRepository(Character::class)->find(0); // Thorin is level 50, no weapons at that level in our sample DB.
+        $weapon = $this->getEntityManager()->getRepository(Weapon::class)->find(1);
+        $inventory->setWeaponForUser($character, $weapon);
+
+        $this->navigationSetUpAndAssert($character);
+        $viewpoint = $this->g->getViewpoint();
+
+        // Check the trade in value.
+        $this->assertStringMatchesFormat('%A`^75`# trade-in value%A', $viewpoint->getDescription());
+
+        // No attachments since there are no weapons.
+        $this->assertEmpty($viewpoint->getAttachments()[0]->getElements());
+
+        $this->navigationTearDown();
+    }
+
+    public function testNavigateToShop()
+    {
+        $inventory = new SimpleInventory($this->g);
+
+        $character = $this->getEntityManager()->getRepository(Character::class)->find(1);
+        $weapon = $this->getEntityManager()->getRepository(Weapon::class)->find(1);
+        $inventory->setWeaponForUser($character, $weapon);
+
+        $this->navigationSetUpAndAssert($character);
+        $viewpoint = $this->g->getViewpoint();
+
+        // Check the trade in value.
+        $this->assertStringMatchesFormat('%A`^75`# trade-in value%A', $viewpoint->getDescription());
+
+        // No attachments since there are no weapons.
+        $this->assertEmpty($viewpoint->getAttachments()[0]->getElements());
+
+        $this->navigationTearDown();
     }
 }

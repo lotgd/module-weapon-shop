@@ -26,12 +26,10 @@
         "lotgd/module-simple-inventory": "dev-master",
         "lotgd/module-simple-wealth": "dev-master"
     },
-
     "require-dev": {
         "phpunit/phpunit": "*",
         "phpunit/dbunit": "*"
     },
-
     "config": {
         "secure-http": false
     }
