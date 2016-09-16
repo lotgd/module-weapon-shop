@@ -89,11 +89,10 @@ class Module implements ModuleInterface {
         $scenes = $module->getProperty(self::WeaponShopSceneArrayProperty);
         if ($scenes && count($scenes) > 0) {
             foreach ($scenes as $id) {
+                $g->getLogger()->addNotice(sprintf("%s: Removing scene id=%d", self::Module, $id));
                 $s = $g->getEntityManager()->getRepository(Scene::class)->find($id);
                 $g->getEntityManager()->remove($s);
             }
         }
-
-        $module->unsetProperty(self::WeaponShopSceneArrayProperty);
     }
 }

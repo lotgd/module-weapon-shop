@@ -23,15 +23,6 @@ characters:
         health: 90
         level: 2
         deletedAt:
-character_viewpoints:
-    -
-        owner_id: 1
-        actions: "a:0:{}"
-        attachments: "a:0:{}"
-        data: "a:0:{}"
-        title: "Village"
-        description: "You arrive in a village."
-        template: "lotgd/module-village/village"
 scenes:
     -
         id: 1
@@ -39,10 +30,6 @@ scenes:
         title: "Village"
         description: "You arrive in a village."
         template: 'lotgd/module-village/village'
-modules:
-    -
-        library: 'lotgd/test-module'
-        createdAt: 2016-08-22
 lotgd_simple_inventory_weapons:
     -
         id: 1

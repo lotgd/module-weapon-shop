@@ -10,6 +10,7 @@ use LotGD\Core\EventHandler;
 use LotGD\Core\LibraryConfigurationManager;
 use LotGD\Core\Models\Character;
 use LotGD\Core\Models\Module as ModuleModel;
+use LotGD\Core\Models\ModuleProperty;
 use LotGD\Core\Models\Scene;
 use LotGD\Core\Tests\ModelTestCase;
 
@@ -49,6 +50,8 @@ class ModuleTest extends ModelTestCase
 
         $logger  = new Logger('test');
         $logger->pushHandler(new RotatingFileHandler(__DIR__ . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'lotgd', 14));
+        $name = $this->getName();
+        $logger->addDebug("{$name}: setUp()");
 
         // Create a Game object for use in these tests.
         $this->g = new Game(new Configuration(getenv('LOTGD_TESTS_CONFIG_PATH')), $logger, $this->getEntityManager(), implode(DIRECTORY_SEPARATOR, [__DIR__, '..']));
@@ -56,6 +59,7 @@ class ModuleTest extends ModelTestCase
         // Register and unregister before/after each test, since
         // handleEvent() calls may expect the module be registered (for example,
         // if they read properties from the model).
+
         $libraryConfigurationManager = new LibraryConfigurationManager($this->g->getComposerManager(), __DIR__ . DIRECTORY_SEPARATOR . '..');
         $this->libraryConfiguration = $libraryConfigurationManager->getConfigurationForLibrary(self::Library);
         $this->g->getModuleManager()->register($this->libraryConfiguration);
@@ -86,6 +90,8 @@ class ModuleTest extends ModelTestCase
 
     public function tearDown()
     {
+        $name = $this->getName();
+        $this->g->getLogger()->addDebug("{$name}: tearDown()");
         $this->g->getModuleManager()->unregister($this->libraryConfiguration);
 
         parent::tearDown();
@@ -155,8 +161,8 @@ class ModuleTest extends ModelTestCase
         // Check the trade in value.
         $this->assertStringMatchesFormat('%A`^75`# trade-in value%A', $viewpoint->getDescription());
 
-        // No attachments since there are no weapons.
-        $this->assertEmpty($viewpoint->getAttachments()[0]->getElements());
+        // One attachment, one weapon, id=1
+        $this->assertSame(1, $viewpoint->getAttachments()[0]->getElements()[0]->getValue());
 
         $this->navigationTearDown();
     }
