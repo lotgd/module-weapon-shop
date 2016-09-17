@@ -16,6 +16,7 @@ use LotGD\Core\Tests\ModelTestCase;
 
 use LotGD\Modules\SimpleInventory\Module as SimpleInventory;
 use LotGD\Modules\SimpleInventory\Models\Weapon;
+use LotGD\Modules\Forms\FormElementOptions;
 
 use LotGD\Modules\WeaponShop\Module;
 
@@ -161,8 +162,59 @@ class ModuleTest extends ModelTestCase
         // Check the trade in value.
         $this->assertStringMatchesFormat('%A`^75`# trade-in value%A', $viewpoint->getDescription());
 
-        // One attachment, one weapon, id=1
+        // One attachment, one weapon, id=1, disabled since you cant buy the same one you have.
         $this->assertSame(1, $viewpoint->getAttachments()[0]->getElements()[0]->getValue());
+        $this->assertTrue($viewpoint->getAttachments()[0]->getElements()[0]->getOptions()->get(FormElementOptions::Disabled));
+
+        $this->navigationTearDown();
+    }
+
+    public function testBuy()
+    {
+        $inventory = new SimpleInventory($this->g);
+
+        $character = $this->getEntityManager()->getRepository(Character::class)->find(2);
+        $weapon = $this->getEntityManager()->getRepository(Weapon::class)->find(1);
+        $inventory->setWeaponForUser($character, $weapon);
+
+        $this->navigationSetUpAndAssert($character);
+        $viewpoint = $this->g->getViewpoint();
+
+        // One attachment, two weapons.
+        $this->assertSame(2, count($viewpoint->getAttachments()[0]->getElements()));
+        // Second weapon is too expensive (more than the trade in value of Weapon id=1)
+        $this->assertFalse($viewpoint->getAttachments()[0]->getElements()[0]->getOptions()->get(FormElementOptions::Disabled));
+        $this->assertTrue($viewpoint->getAttachments()[0]->getElements()[1]->getOptions()->get(FormElementOptions::Disabled));
+
+        $this->g->takeAction($viewpoint->getAttachments()[0]->getAction()->getId(), ['choice' => 2]);
+        $viewpoint = $this->g->getViewpoint();
+        $this->assertSame(Module::WeaponShopBuyScene, $viewpoint->getTemplate());
+        $this->assertSame(2, $inventory->getWeaponForUser($character)->getId());
+
+        $this->navigationTearDown();
+    }
+
+    public function testBuyTooExpensive()
+    {
+        $inventory = new SimpleInventory($this->g);
+
+        $character = $this->getEntityManager()->getRepository(Character::class)->find(3);
+        $weapon = $this->getEntityManager()->getRepository(Weapon::class)->find(1);
+        $inventory->setWeaponForUser($character, $weapon);
+
+        $this->navigationSetUpAndAssert($character);
+        $viewpoint = $this->g->getViewpoint();
+
+        // One attachment, two weapons.
+        $this->assertSame(2, count($viewpoint->getAttachments()[0]->getElements()));
+        // Second weapon is too expensive (more than the trade in value of Weapon id=1)
+        $this->assertFalse($viewpoint->getAttachments()[0]->getElements()[0]->getOptions()->get(FormElementOptions::Disabled));
+        $this->assertTrue($viewpoint->getAttachments()[0]->getElements()[1]->getOptions()->get(FormElementOptions::Disabled));
+
+        $this->g->takeAction($viewpoint->getAttachments()[0]->getAction()->getId(), ['choice' => 3]);
+        $viewpoint = $this->g->getViewpoint();
+        $this->assertSame(Module::WeaponShopBuyScene, $viewpoint->getTemplate());
+        $this->assertSame(1, $inventory->getWeaponForUser($character)->getId());
 
         $this->navigationTearDown();
     }

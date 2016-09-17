@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace LotGD\Modules\WeaponShop;
 
+use LotGD\Core\Action;
+use LotGD\Core\ActionGroup;
 use LotGD\Core\Game;
 use LotGD\Core\Models\CharacterViewpoint;
 use LotGD\Core\Models\Scene;
@@ -49,8 +51,8 @@ class BuyScene
             $description .= "`!MightyE`7 looks at you, confused for a second, then realizes that you've apparently "
                 ."taken one too many bonks on the head, and nods and smiles.";
         } else {
-            $newWeaponName = $choiceWeapon->name;
-            if ($gold + $tradeInValue < $choiceWeapon->cost) {
+            $newWeaponName = $choiceWeapon->getName();
+            if ($gold + $tradeInValue < $choiceWeapon->getCost()) {
                 $description .= "Waiting until `!MightyE`7 looks away, you reach carefully for the `5{$newWeaponName}`7, "
                     ."which you silently remove from the rack upon which it sits. Secure in your theft, you turn around "
                     ."and head for the door, swiftly, quietly, like a ninja, only to discover that upon reaching the door, "
@@ -62,9 +64,10 @@ class BuyScene
                     ."under your remaining foot.`n`nYou wake up some time later, having been tossed unconscious into "
                     ."the street.";
             } else {
-                $wealth->setGoldForUser($user, $gold - ($w->cost - $tradeInValue));
+                $currentWeaponName = $currentWeapon->getName();
+                $wealth->setGoldForUser($user, $gold - ($choiceWeapon->getCost() - $tradeInValue));
                 $inventory->setWeaponForUser($user, $choiceWeapon);
-                $user->save($em);
+                $user->save($g->getEntityManager());
 
                 $description .= "`!MightyE`7 takes your `5{$currentWeaponName}`7 and promptly puts a price on it, "
                     . "setting it out for display with the rest of his weapons.`n`nIn return, he hands you a shiny "
@@ -77,20 +80,10 @@ class BuyScene
 
     private static function addMenu(Game $g, CharacterViewpoint $viewpoint, array $context)
     {
-        // Add the back action to the scene before the shop, passed down as 'origin' in
+        // Add the back action to the scene before the shop, passed down as 'referrer' in
         // the context.
-
-        $actionGroups = $viewpoint->getActionGroups();
-        $originSceneId = $context['origin'];
-        foreach ($actionGroups as $group) {
-            if ($group->getId() === ActionGroup::DefaultGroup) {
-                $actions = $group->getActions();
-                $actions[] = new Action($originSceneId);
-                $group->setActions($actions);
-                break;
-            }
-        }
-        $viewpoint->setActionGroups($actionGroups);
+        $referrer = $context['referrer'];
+        $viewpoint->addActionToGroupId(new Action($referrer->getId()), ActionGroup::DefaultGroup);
     }
 
     public static function handleViewpoint(Game $g, array $context)

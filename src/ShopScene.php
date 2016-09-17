@@ -35,10 +35,16 @@ class ShopScene
         ]);
     }
 
-    private static function getTradeInValue(Game $g): int
+    private static function getWeapon(Game $g)
     {
         $inventory = new SimpleInventory($g);
         $weapon = $inventory->getWeaponForUser($g->getCharacter());
+        return $weapon;
+    }
+
+    private static function getTradeInValue(Game $g): int
+    {
+        $weapon = self::getWeapon($g);
 
         // Get the trade-in value for their existing weapon.
         if (!$weapon) {
@@ -61,8 +67,7 @@ class ShopScene
         $value = self::getTradeInValue($g);
 
         if ($value > 0) {
-            $inventory = new SimpleInventory($g);
-            $weapon = $inventory->getWeaponForUser($g->getCharacter());
+            $weapon = self::getWeapon($g);
             $name = $weapon->getName();
             $description = $scene->getDescription();
             $description .= "\n`!MightyE`7 looks at you and says, \"`#I'll give you `^{$value}`# trade-in value for your `5{$name}`#.";
@@ -89,6 +94,8 @@ class ShopScene
         $wealth = new SimpleWealth($g);
         $gold = $wealth->getGoldForUser($user);
 
+        $weapon = self::getWeapon($g);
+
         $inventory = new SimpleInventory($g);
         $weapons = $inventory->getWeaponsForLevel($user->getLevel());
 
@@ -96,7 +103,8 @@ class ShopScene
         foreach ($weapons as $w) {
             $id = $w->getId();
             $name = $w->getName();
-            $options = ($w->getCost() + $tradeInValue <= $gold)
+            // Disable weapons that are too expensive or that you already own.
+            $options = ($w->getCost() - $tradeInValue <= $gold) && ($id != $weapon->getId())
                 ? FormElementOptions::None()
                 : FormElementOptions::Disabled();
 
@@ -107,25 +115,22 @@ class ShopScene
                                           $options);
         }
 
-        $form = new Form($elements, self::getBuyAction($g, $scene));
+        $buyAction = self::getBuyAction($g, $scene);
+        $form = new Form($elements, $buyAction);
 
         $attachments = $viewpoint->getAttachments();
         $attachments[] = $form;
         $viewpoint->setAttachments($attachments);
+
+        // The buy action must be present in the viewpoint for a user to take it,
+        // but we don't want it shown in the menu. The client can choose to display
+        // a submit button if they like.
+        $viewpoint->addActionToGroupId($buyAction, ActionGroup::HiddenGroup);
     }
 
     private static function addMenu(Game $g, Scene $scene, CharacterViewpoint $viewpoint)
     {
-        $actionGroups = $viewpoint->getActionGroups();
-        foreach ($actionGroups as $group) {
-            if ($group->getId() === ActionGroup::DefaultGroup) {
-                $actions = $group->getActions();
-                $actions[] = new Action($scene->getParent()->getId());
-                $group->setActions($actions);
-                break;
-            }
-        }
-        $viewpoint->setActionGroups($actionGroups);
+        $viewpoint->addActionToGroupId(new Action($scene->getParent()->getId()), ActionGroup::DefaultGroup);
     }
 
     public static function handleViewpoint(Game $g, array $context)
