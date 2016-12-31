@@ -6,7 +6,7 @@ namespace LotGD\Modules\WeaponShop;
 use LotGD\Core\Action;
 use LotGD\Core\ActionGroup;
 use LotGD\Core\Game;
-use LotGD\Core\Models\CharacterViewpoint;
+use LotGD\Core\Models\Viewpoint;
 use LotGD\Core\Models\Scene;
 use LotGD\Modules\SimpleInventory\Module as SimpleInventory;
 use LotGD\Modules\SimpleWealth\Module as SimpleWealth;
@@ -33,7 +33,7 @@ class BuyScene
         }
     }
 
-    private static function addDescription(Game $g, Scene $scene, CharacterViewpoint $viewpoint, array $parameters)
+    private static function addDescription(Game $g, Scene $scene, Viewpoint $viewpoint, array $parameters)
     {
         $user = $viewpoint->getOwner();
         $description = $viewpoint->getDescription();
@@ -78,7 +78,7 @@ class BuyScene
         $viewpoint->setDescription($description);
     }
 
-    private static function addMenu(Game $g, CharacterViewpoint $viewpoint, array $context)
+    private static function addMenu(Game $g, Viewpoint $viewpoint, array $context)
     {
         // Add the back action to the scene before the shop, passed down as 'referrer' in
         // the context.

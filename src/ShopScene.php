@@ -7,7 +7,7 @@ use LotGD\Core\Action;
 use LotGD\Core\ActionGroup;
 use LotGD\Core\Game;
 use LotGD\Core\Models\Scene;
-use LotGD\Core\Models\CharacterViewpoint;
+use LotGD\Core\Models\Viewpoint;
 use LotGD\Modules\Forms\ {
     Form,
     FormElement,
@@ -62,7 +62,7 @@ class ShopScene
         }
     }
 
-    private static function addTradeInMessage(Game $g, Scene $scene, CharacterViewpoint $viewpoint)
+    private static function addTradeInMessage(Game $g, Scene $scene, Viewpoint $viewpoint)
     {
         $value = self::getTradeInValue($g);
 
@@ -87,7 +87,7 @@ class ShopScene
         throw new Exception("Can't find a buy scene that's a child of scene id={$id}");
     }
 
-    private static function addForSaleForm(Game $g, Scene $scene, CharacterViewpoint $viewpoint, int $tradeInValue)
+    private static function addForSaleForm(Game $g, Scene $scene, Viewpoint $viewpoint, int $tradeInValue)
     {
         $user = $viewpoint->getOwner();
 
@@ -128,9 +128,9 @@ class ShopScene
         $viewpoint->addActionToGroupId($buyAction, ActionGroup::HiddenGroup);
     }
 
-    private static function addMenu(Game $g, Scene $scene, CharacterViewpoint $viewpoint)
+    private static function addMenu(Game $g, Scene $scene, Viewpoint $viewpoint)
     {
-        $viewpoint->addActionToGroupId(new Action($scene->getParent()->getId()), ActionGroup::DefaultGroup);
+        $viewpoint->addActionToGroupId(new Action($scene->getParents()[0]->getId()), ActionGroup::DefaultGroup);
     }
 
     public static function handleViewpoint(Game $g, array $context)

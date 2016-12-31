@@ -104,7 +104,7 @@ class ModuleTest extends ModelTestCase
         $this->assertSame(1, count($village->getChildren()));
         $shop = $village->getChildren()[0];
         $this->assertSame(Module::WeaponShopScene, $shop->getTemplate());
-        $this->assertSame($village->getId(), $shop->getParent()->getId());
+        $this->assertSame($village->getId(), $shop->getParents()[0]->getId());
     }
 
     public function testHandleUnknownEvent()

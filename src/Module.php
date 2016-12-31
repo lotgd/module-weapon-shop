@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace LotGD\Modules\WeaponShop;
 
+use Doctrine\Common\Collections\ArrayCollection;
+
 use LotGD\Core\Action;
 use LotGD\Core\Game;
 use LotGD\Core\Module as ModuleInterface;
 use LotGD\Core\Models\Module as ModuleModel;
-use LotGD\Core\Models\CharacterViewpoint;
+use LotGD\Core\Models\Viewpoint;
 use LotGD\Core\Models\Scene;
 
 use LotGD\Modules\Forms\Form;
@@ -68,12 +70,12 @@ class Module implements ModuleInterface {
             foreach ($villages as $v) {
                 $g->getLogger()->addNotice(sprintf("%s: Adding a weapon shop to scene id=%d", self::Module, $v->getId()));
                 $shop = ShopScene::getScene();
-                $shop->setParent($v);
+                $shop->setParents(new ArrayCollection([$v]));
                 $shop->save($g->getEntityManager());
 
                 // Add a buying scene.
                 $buy = BuyScene::getScene();
-                $buy->setParent($shop);
+                $buy->setParents(new ArrayCollection([$shop]));
                 $buy->save($g->getEntityManager());
 
                 // Keep a list of these shop scenes we've added, so we can remove them

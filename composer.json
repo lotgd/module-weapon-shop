@@ -21,7 +21,7 @@
         }
     ],
     "require": {
-        "lotgd/core": "dev-master",
+        "lotgd/core": "0.1.0-alpha",
         "lotgd/module-forms": "dev-master",
         "lotgd/module-simple-inventory": "dev-master",
         "lotgd/module-simple-wealth": "dev-master"
