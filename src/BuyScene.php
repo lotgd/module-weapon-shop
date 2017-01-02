@@ -13,7 +13,7 @@ use LotGD\Modules\SimpleWealth\Module as SimpleWealth;
 
 class BuyScene
 {
-    public function getScene()
+    public static function getScene()
     {
         return Scene::create([
             'template' => Module::WeaponShopBuyScene,
